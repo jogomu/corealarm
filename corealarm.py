@@ -1,4 +1,6 @@
+import sys
 import struct
+import time
 import simplepyble
 
 # https://github.com/CoreBodyTemp/CoreBodyTemp/blob/main/CoreTemp%20BLE%20Service%20Specification.pdf
@@ -39,6 +41,48 @@ import simplepyble
 target_service_id = '00002100-5b1e-4347-b07c-97b514dae121'
 target_characteristic_id = '00002101-5b1e-4347-b07c-97b514dae121'
 
+def process_characteristic(contents, api_source):
+    print(f"    API source {api_source}")
+    print(f"        Contents: {contents} ({len(contents)})")
+    parsed_data = struct.unpack('<BhhhBB', contents)
+    flags = parsed_data[0]
+    skin_temp_present = (flags >> 0) & 1
+    core_temp_present = (flags >> 1) & 1 # I think
+    quality_present = (flags >> 2) & 1
+    temp_is_fahrenheit = (flags >> 3) & 1
+    heart_rate_present = (flags >> 4) & 1
+    print(f'        skin: {skin_temp_present}, core: {core_temp_present}, quality: {quality_present}, F: {temp_is_fahrenheit}, heart rate: {heart_rate_present}')
+    core_temp = parsed_data[1]
+    skin_temp = parsed_data[2]
+    reserved = parsed_data[3]
+    quality = parsed_data[4]
+    print(repr(quality))
+    heart_rate = parsed_data[5]
+    print(f'        {core_temp} {skin_temp} {reserved} {quality} {heart_rate}')
+
+    state = (quality >> 4) & 3
+    states = ['heart rate monitor not supported','heart rate supported, no signal','have heart rate signal','heart rate state unavailable']
+    print('        State:',states[state])
+    qualities = ['Invalid','Poor','Fair','Good','Excellent','','','N/A']
+    quality = quality & 7
+    print('        Quality:',qualities[quality])
+    
+    if core_temp==32767:
+        core_temp = None
+    else:
+        core_temp = core_temp / 100
+        if not temp_is_fahrenheit:
+            core_temp = (core_temp * 1.8) + 32
+    print(f'        Core body temp: {core_temp}')
+
+    skin_temp = skin_temp / 100
+    if not temp_is_fahrenheit:
+        skin_temp = (skin_temp * 1.8) + 32
+    print(f'        Skin temp: {skin_temp}')
+
+def process_notify(contents):
+    process_characteristic(contents,'notify')
+
 if __name__ == "__main__":
     adapters = simplepyble.Adapter.get_adapters()
 
@@ -76,6 +120,8 @@ if __name__ == "__main__":
         if not have_target:
             continue
 
+        #help(peripheral)
+        #sys.exit(0)
 
         connectable_str = "Connectable" if peripheral.is_connectable() else "Non-Connectable"
         print(f"{peripheral.identifier()} [{peripheral.address()}] - {connectable_str}")
@@ -85,7 +131,7 @@ if __name__ == "__main__":
         manufacturer_data = peripheral.manufacturer_data()
         for manufacturer_id, value in manufacturer_data.items():
             print(f"    Manufacturer ID: {manufacturer_id}")
-            print(f"    Manufacturer data: {value}")
+            print(f"    Manufacturer data: {value} {len(value)}")
 
         services = peripheral.services()
         for service in services:
@@ -98,39 +144,27 @@ if __name__ == "__main__":
         print("Successfully connected, listing services...")
         services = peripheral.services()
         for service in services:
-            if service.uuid()!=target_service_id:
-                continue
             print(f"Service: {service.uuid()}")
             for characteristic in service.characteristics():
-                if characteristic.uuid() != target_characteristic_id:
-                    continue
-                print(f"    Characteristic: {characteristic.uuid()}")
-                contents = peripheral.read(service.uuid(), characteristic.uuid())
-                print(f"        Contents: {contents} ({len(contents)})")
-                parsed_data = struct.unpack('<BhhhBB', contents)
-                flags = parsed_data[0]
-                skin_temp_present = (flags >> 0) & 1
-                core_temp_present = (flags >> 1) & 1 # I think
-                quality_present = (flags >> 2) & 1
-                temp_is_fahrenheit = (flags >> 3) & 1
-                heart_rate_present = (flags >> 4) & 1
-                print(f'        skin: {skin_temp_present}, core: {core_temp_present}, quality: {quality_present}, F: {temp_is_fahrenheit}, heart rate: {heart_rate_present}')
-                core_temp = parsed_data[1]
-                skin_temp = parsed_data[2]
-                reserved = parsed_data[3]
-                quality = parsed_data[4]
-                heart_rate = parsed_data[5]
-                print(f'        {core_temp} {skin_temp} {reserved} {quality} {heart_rate}')
-                
-                core_temp = core_temp / 100
-                if not temp_is_fahrenheit:
-                    core_temp = (core_temp * 1.8) + 32
-                print(f'        Core body temp: {core_temp}')
+                print(f"        Characteristic: {characteristic.uuid()}")
 
-                skin_temp = skin_temp / 100
-                if not temp_is_fahrenheit:
-                    skin_temp = (skin_temp * 1.8) + 32
-                print(f'        Skin temp: {skin_temp}')
+            #for characteristic in service.characteristics():
+            #    print(f"    Characteristic: {characteristic.uuid()}")
+            #    #if characteristic.uuid() != target_characteristic_id:
+            #    #    continue
+
+        peripheral.write_command(target_service_id, target_characteristic_id, b'\x01\x00')
+
+        #peripheral.notify(service.uuid(), characteristic.uuid(), lambda contents: process_characteristic(contents,'notify'))
+        #peripheral.notify(service.uuid(), characteristic.uuid(), process_notify)
+        peripheral.notify(target_service_id, target_characteristic_id, lambda data: print(f"Notification: {data}"))
+        #peripheral.notify(service.uuid(), '00002102-5b1e-4347-b07c-97b514dae121', process_notify)
+        time.sleep(30)
+        peripheral.unsubscribe(target_service_id, target_characteristic_id)
+
+        contents = peripheral.read(target_service_id, target_characteristic_id)
+        process_characteristic(contents,'read')
+
 
 
         peripheral.disconnect()
