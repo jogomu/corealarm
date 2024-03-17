@@ -7,13 +7,12 @@ from zoneinfo import ZoneInfo
 america_new_york=ZoneInfo('America/New_York')
 
 def make_a_racket():
-    chime.info()
-    #for theme in chime.themes():
-    #    chime.theme(theme)
-    #    chime.success()
-    #    chime.warning()
-    #    chime.error()
-    #    chime.info()
+    for theme in chime.themes():
+        chime.theme(theme)
+        chime.success()
+        chime.warning()
+        chime.error()
+        chime.info()
 
 def get_datetime(epoch_ns):
     seconds, nanoseconds = divmod(epoch_ns, 1_000_000_000)
@@ -67,7 +66,7 @@ if __name__ == "__main__":
     try:
         now=get_datetime(time.time_ns())
         diff=now-dt
-        assert diff < timedelta(seconds=60)
+        assert diff < timedelta(seconds=90)
     except:
         alarm(f'stale timestamp {dt} is {diff} old, alarming')
 

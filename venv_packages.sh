@@ -1,3 +1,3 @@
 #!/bin/bash
-pip install simplepyble
-pip install chime
+bin/pip install simplepyble
+bin/pip install chime
