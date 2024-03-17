@@ -1,10 +1,8 @@
 import sys
 import time
 import chime
-from datetime import datetime, timezone, timedelta
-from zoneinfo import ZoneInfo
-
-america_new_york=ZoneInfo('America/New_York')
+from datetime import timedelta
+from utils import get_datetime
 
 def make_a_racket():
     for theme in chime.themes():
@@ -13,13 +11,6 @@ def make_a_racket():
         chime.warning()
         chime.error()
         chime.info()
-
-def get_datetime(epoch_ns):
-    seconds, nanoseconds = divmod(epoch_ns, 1_000_000_000)
-    dt = datetime.fromtimestamp(seconds, tz=timezone.utc)
-    dt = dt.replace(microsecond=nanoseconds//1000)  # Convert nanoseconds to microseconds
-    dt = dt.astimezone(america_new_york)
-    return dt
 
 def info(msg):
     dt=get_datetime(time.time_ns())
