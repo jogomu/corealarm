@@ -1,3 +1,9 @@
+
+###
+### Note: this still needs some work
+###
+
+
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -6,6 +12,14 @@ import pandas as pd
 import numpy as np
 from utils import get_datetime
 from zoneinfo import ZoneInfo
+
+# Define high and low threshold values for each series
+if len(sys.argv)!=5:
+    y1_high, y1_low = 99, 97.5
+    y2_high, y2_low = 97, 65
+else:
+    y1_high, y1_low = (float(sys.argv[2]), float(sys.argv[1]))
+    y2_high, y2_low = (float(sys.argv[4]), float(sys.argv[3]))
 
 seekpos = 0
 try:
@@ -23,13 +37,6 @@ line1 = ax1.plot_date(x_data, y1_data, '-', label='Core Body Temp', color='green
 # Create a second y-axis for the second series
 ax2 = ax1.twinx()
 line2 = ax2.plot_date(x_data, y2_data, '-', label='Skin Temp', color='orange')[0]
-
-#last_point_y1 = ax1.plot([], [], 'rx', markersize=10, label='Last Core Body Temp')[0]
-#last_point_y2 = ax2.plot([], [], 'rx', markersize=10, label='Last Skin Temp')[0]
-
-# Define high and low threshold values for each series
-y1_high, y1_low = 99, 97.5
-y2_high, y2_low = 97, 89 #65 
 
 # Draw horizontal lines for thresholds
 ax1.axhline(y=y1_high, color='green', linestyle='-', linewidth=3, label='Core Body Temp High')
