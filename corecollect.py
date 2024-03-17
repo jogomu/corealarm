@@ -43,8 +43,10 @@ def parse_characteristic(contents):
 def parse_and_print(contents):
     timestamp, core_temp, quality, skin_temp = parse_characteristic(contents)
     core_temp_str = str(core_temp) if core_temp else ''
-    line = f'{timestamp},{core_temp_str},{quality},{skin_temp}'
+    # end with , so that we can filter on (probably) complete lines only
+    line = f'{timestamp},{core_temp_str},{quality},{skin_temp},'
     print(line)
+    sys.stdout.flush()
 
 if __name__ == "__main__":
     target_service_id = '00002100-5b1e-4347-b07c-97b514dae121'
