@@ -46,6 +46,7 @@ if __name__ == "__main__":
         assert core_high <= 105
         assert skin_low >= 32
         assert skin_high <= 105
+        print(f'running alarm with core expected in [{core_low},{core_high}] and skin expected in [{skin_low},{skin_high}]')
     except:
         alarm(f'bad argument(s): {sys.argv[1]} {sys.argv[2]} {sys.argv[3]} {sys.argv[4]}')
 
