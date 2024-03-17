@@ -1,6 +1,6 @@
 #!/bin/bash
 
 while true; do
-    python corecollect.py >> log.csv
+    python corecollect.py | tee -a log.csv
     sleep 1
 done
