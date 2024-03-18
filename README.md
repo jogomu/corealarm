@@ -2,8 +2,6 @@
 
 ![Sample Chart](sample_chart.png "Sample Chart")
 
-[Link Text](URL "Optional Title")
-
 connect to [CORE body temp sensor](https://corebodytemp.com/ "corebodytemp.com") via BLE and alarm if outside target range for core and skin temps
 
 run `corecollect.sh` and `corealarm.sh` in the same directory (shared access to log.csv)
